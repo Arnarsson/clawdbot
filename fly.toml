@@ -1,0 +1,49 @@
+# Fly.io configuration for Clawdbot Gateway
+# Deploy with: fly launch --no-deploy && fly deploy
+# Docs: https://fly.io/docs/reference/configuration/
+
+app = "clawdbot-gateway"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 1000
+    soft_limit = 500
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [[services.http_checks]]
+    interval = "15s"
+    timeout = "5s"
+    grace_period = "30s"
+    method = "GET"
+    path = "/health"
+
+# Persistent volume for credentials and sessions
+[mounts]
+  source = "clawdbot_data"
+  destination = "/root/.clawdbot"
