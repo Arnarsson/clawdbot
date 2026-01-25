@@ -1,0 +1,345 @@
+# Codebase Structure
+
+**Analysis Date:** 2026-01-25
+
+## Directory Layout
+
+```
+clawdbot/
+├── src/                         # Main TypeScript source code
+│   ├── entry.ts                 # CLI entrypoint (respawn logic, argv normalization)
+│   ├── index.ts                 # Main module export and run-if-main guard
+│   ├── cli/                     # CLI command system (Commander.js wrapper + handlers)
+│   ├── commands/                # Command implementations (agent, config, send, etc.)
+│   ├── gateway/                 # Long-running server for channels & agent execution
+│   ├── channels/                # Shared channel logic (routing, allowlists, typing)
+│   ├── telegram/                # Telegram channel adapter
+│   ├── discord/                 # Discord channel adapter
+│   ├── slack/                   # Slack channel adapter
+│   ├── signal/                  # Signal channel adapter
+│   ├── imessage/                # iMessage channel adapter
+│   ├── line/                    # Line channel adapter
+│   ├── agents/                  # Agent runtime, Pi integration, auth profiles
+│   ├── config/                  # Config loading, validation, persistence
+│   ├── sessions/                # Session store (SQLite)
+│   ├── routing/                 # Message-to-agent routing logic
+│   ├── plugins/                 # Plugin system core (registry, types, loader)
+│   ├── plugin-sdk/              # Public API for plugin developers
+│   ├── infra/                   # Infrastructure (exec, heartbeat, ports, binaries)
+│   ├── auto-reply/              # Template-based response generation
+│   ├── logging/                 # Log capture and formatting
+│   ├── media/                   # Media processing (images, PDFs, attachments)
+│   ├── media-understanding/     # Media analysis (vision APIs)
+│   ├── link-understanding/      # URL fetching and content extraction
+│   ├── memory/                  # Message history and context management
+│   ├── markdown/                # Markdown parsing and IR
+│   ├── tts/                     # Text-to-speech generation
+│   ├── security/                # Audit logging and approvals
+│   ├── browser/                 # Playwright browser automation
+│   ├── macos/                   # macOS-specific features
+│   ├── terminal/                # TUI components (tables, progress, palette)
+│   ├── utils.ts                 # Utility functions (path, WhatsApp normalization)
+│   └── types/                   # TypeScript type definitions for vendor packages
+├── extensions/                  # Plugin packages (workspace)
+│   ├── bluebubbles/             # iMessage via BlueBubbles
+│   ├── discord/                 # Discord plugin
+│   ├── telegram/                # Telegram plugin (if separated)
+│   ├── matrix/                  # Matrix/Element plugin
+│   ├── msteams/                 # Microsoft Teams plugin
+│   ├── signal/                  # Signal plugin
+│   ├── slack/                   # Slack plugin
+│   ├── mattermost/              # Mattermost plugin
+│   ├── line/                    # Line plugin
+│   ├── google-chat/             # Google Chat plugin
+│   ├── whatsapp/                # WhatsApp plugin (if separated)
+│   ├── voice-call/              # Voice call extension
+│   ├── memory-core/             # Memory system base
+│   ├── memory-lancedb/          # Memory with LanceDB backend
+│   ├── llm-task/                # LLM task execution
+│   ├── diagnostics-otel/        # OpenTelemetry diagnostics
+│   ├── open-prose/              # Open Prose integration
+│   └── [other extensions]/      # Additional integrations
+├── skills/                      # Skill packages (agent tools)
+│   ├── github/                  # GitHub API tools
+│   ├── discord/                 # Discord tools
+│   ├── slack/                   # Slack tools
+│   ├── notion/                  # Notion integration
+│   ├── obsidian/                # Obsidian vault
+│   ├── openai-whisper/          # Speech-to-text
+│   ├── openai-image-gen/        # DALL-E integration
+│   ├── weather/                 # Weather API
+│   ├── spotify-player/          # Spotify control
+│   └── [other skills]/          # Additional tools
+├── ui/                          # Web UI (React/Lit)
+│   ├── src/                     # Frontend source
+│   └── public/                  # Static assets
+├── apps/                        # Native applications
+│   ├── macos/                   # macOS app (SwiftUI)
+│   ├── ios/                     # iOS app (Swift)
+│   ├── android/                 # Android app (Kotlin/Gradle)
+│   └── shared/                  # Shared Swift code
+├── docs/                        # Mintlify documentation
+│   ├── channels/                # Channel-specific docs
+│   ├── concepts/                # Conceptual guides
+│   ├── reference/               # API reference
+│   ├── install/                 # Installation guides
+│   └── [sections]/              # Other doc sections
+├── dist/                        # Compiled output (generated by tsc)
+├── test/                        # Shared test utilities
+│   ├── fixtures/                # Test data
+│   ├── helpers/                 # Test helper functions
+│   └── mocks/                   # Mock implementations
+├── scripts/                     # Development and build scripts
+│   ├── run-node.mjs             # Dev runner (tsx wrapper)
+│   ├── test-parallel.mjs        # Parallel test runner
+│   ├── package-mac-app.sh       # macOS packaging
+│   └── [other scripts]/         # Build, release, docker utilities
+├── Swabble/                     # iOS app companion framework (Swift)
+├── vendor/                      # Vendored dependencies
+│   └── a2ui/                    # A2UI canvas bundle
+├── .github/                     # GitHub workflows and templates
+├── git-hooks/                   # Custom git hooks
+├── patches/                     # pnpm patch files
+├── .planning/                   # GSD planning documents
+│   └── codebase/                # Architecture/structure docs
+├── package.json                 # Root workspace config
+├── pnpm-workspace.yaml          # Monorepo workspace definition
+├── tsconfig.json                # TypeScript config
+├── vitest.config.ts             # Test runner config
+└── [config files]/              # .eslintrc, .prettierrc, Dockerfile, etc.
+```
+
+## Directory Purposes
+
+**`src/cli/`:**
+- Purpose: Command-line interface implementation
+- Contains: Commander.js program builder, command registration, argument parsing, progress/prompt utilities
+- Key files: `program/build-program.ts` (main builder), `program/command-registry.ts` (all commands), `run-main.ts` (entry after profile setup)
+
+**`src/commands/`:**
+- Purpose: Individual command handlers
+- Contains: Agent management, config operations, message sending, onboarding, status checks
+- Naming: `<domain>.<subcommand>.ts` (e.g., `agents.add.ts`, `send.ts`, `config.ts`)
+
+**`src/gateway/`:**
+- Purpose: Daemon server for channels and agent execution
+- Contains: WebSocket server, message routing, protocol handling, configuration reload
+- Key files: `boot.ts` (initialization), `server/` (WebSocket), `client.ts` (gateway client), `openresponses-http.ts` (streaming)
+
+**`src/channels/`:**
+- Purpose: Channel adapter abstraction and shared utilities
+- Contains: Plugin types, allowlist resolution, mention gating, message actions, reply prefixes
+- Key files: `plugins/types.ts` (ChannelPlugin interface), `registry.ts` (channel listing)
+
+**`src/agents/`:**
+- Purpose: Agent runtime and provider integration
+- Contains: Pi agent runner (embedded), auth profiles, tool execution, identity resolution
+- Key files: `pi-embedded-runner/` (main execution), `auth-profiles/` (credential management), `tools/` (tool implementations)
+
+**`src/config/`:**
+- Purpose: Configuration management (load, validate, persist, reload)
+- Contains: Zod schemas for all config domains, JSON5 parsing, hot-reload watcher
+- Key files: `zod-schema.js` (main schema), `io.ts` (read/write), `types.ts` (TypeScript types)
+
+**`src/infra/`:**
+- Purpose: Cross-cutting infrastructure
+- Contains: Exec approvals, heartbeat runners, port availability, binary management, error formatting
+- Key files: `heartbeat-runner.ts` (message processing loop), `exec-approvals.ts` (safety prompts), `outbound/` (message delivery)
+
+**`src/plugins/`:**
+- Purpose: Plugin system core (registry, loader, HTTP routing)
+- Contains: Global plugin registry (as singleton), jiti-based dynamic import, HTTP handler registration
+- Key files: `runtime.ts` (registry access), `loader.ts` (plugin discovery), `http-registry.ts` (route registration)
+
+**`src/auto-reply/`:**
+- Purpose: Template-based response generation with context
+- Contains: Template evaluation (string interpolation), history management, chunk modes, reply tokens
+- Key files: `reply.ts` (main generation), `templating.ts` (template logic), `reply/history.ts` (context assembly)
+
+**`src/routing/`:**
+- Purpose: Route inbound messages to correct agent + session
+- Contains: Binding resolution (by peer/guild/team/account), session key derivation
+- Key files: `resolve-route.ts` (main logic), `bindings.ts` (binding iteration), `session-key.ts` (key format)
+
+**`src/logging/`:**
+- Purpose: Structured logging and console capture
+- Contains: Log sink registry, console hijacking, output formatting
+- Key files: `logging.ts` (capture setup), `src/logger.ts` (named logger with verbose mode)
+
+**`src/security/`:**
+- Purpose: Audit logging and execution approvals
+- Contains: Audit log formatting and persistence, exec approval prompts
+- Key files: `audit.ts` (audit log), `audit-extra.ts` (extended details), `src/infra/exec-approvals.ts` (approval prompts)
+
+**`src/media/`:**
+- Purpose: Media processing (images, PDFs, attachments)
+- Contains: Image resizing/optimization, PDF text extraction, file type detection
+- Key files: As directory contains utilities for individual media types
+
+**`src/memory/`:**
+- Purpose: Message history and context management
+- Contains: History window building, memory store integration (core + plugins like LanceDB)
+- Key files: `manager.ts` (main memory manager)
+
+**`test/`:**
+- Purpose: Shared test utilities and fixtures
+- Contains: Helper functions, mock implementations, test data
+- Key files: `helpers/` (utility functions), `fixtures/` (static data), `mocks/` (mock objects)
+
+**`extensions/`:**
+- Purpose: Plugin packages (monorepo workspaces)
+- Contains: Each plugin as independent package with own `package.json`, `src/`, tests
+- Pattern: Each extension self-contained; core exports plugin SDK via `src/plugin-sdk/index.ts`
+
+**`skills/`:**
+- Purpose: Agent tools/skills (monorepo workspaces)
+- Contains: Each skill as package; may depend on external APIs
+- Pattern: Skills registered at runtime if installed
+
+**`scripts/`:**
+- Purpose: Development and deployment automation
+- Key files: `run-node.mjs` (dev runner with tsx), `test-parallel.mjs` (parallel vitest), `package-mac-app.sh` (macOS build)
+
+## Key File Locations
+
+**Entry Points:**
+- `src/entry.ts`: Executable entrypoint (respawn logic, Windows normalization)
+- `src/index.ts`: Module entrypoint and CLI run-if-main guard
+- `src/cli/run-main.ts`: After profile setup, parses and dispatches commands
+
+**Configuration:**
+- `src/config/io.ts`: Load and persist config files
+- `src/config/zod-schema.js`: Master schema for all config domains
+- `src/config/paths.ts`: Resolve config directory paths
+
+**Core Logic:**
+- `src/gateway/boot.ts`: Initialize gateway server
+- `src/gateway/server/ws-connection/message-handler.ts`: Handle inbound messages
+- `src/routing/resolve-route.ts`: Route messages to agents
+- `src/auto-reply/reply.ts`: Generate responses
+
+**Channel Adapters:**
+- `src/telegram/bot.ts`: Telegram polling and handling
+- `src/discord/index.ts`: Discord adapter entry
+- `src/slack/index.ts`: Slack Socket Mode entry
+- `src/channels/web/index.ts`: WhatsApp Web (Baileys) entry
+
+**Agent Execution:**
+- `src/agents/pi-embedded-runner/run/attempt.ts`: Pi agent execution loop
+- `src/agents/tools/`: Tool implementations (browser, bash, etc.)
+- `src/agents/auth-profiles/`: Credential management
+
+**Shared Utilities:**
+- `src/utils.ts`: WhatsApp normalization, path helpers
+- `src/terminal/`: TUI components (tables, progress)
+- `src/markdown/ir.ts`: Markdown AST representation
+
+## Naming Conventions
+
+**Files:**
+- Modules: `kebab-case.ts` (e.g., `message-handler.ts`, `resolve-route.ts`)
+- Tests: `*.test.ts` or `*.e2e.test.ts` (colocated with source)
+- Types: Inline in source files, no separate `*.types.ts` files
+- Tests with descriptive names: `<module>.<scenario>.test.ts` (e.g., `auth-profiles.external-cli-credential-sync.syncs-claude-cli-oauth-credentials-into-anthropic.test.ts`)
+
+**Directories:**
+- Feature domains: kebab-case (e.g., `media-understanding`, `link-understanding`)
+- Subdomains: Grouped by feature (e.g., `agents/auth-profiles/`, `gateway/server/`)
+
+**Functions:**
+- camelCase with action verb prefix (e.g., `resolveRoute`, `normalizeE164`, `buildAgentSessionKey`)
+- Predicates: `is*` or `should*` (e.g., `isSelfChatMode`, `shouldAckReaction`)
+- Factories: `create*` or `build*` (e.g., `createDefaultDeps`, `buildProgram`)
+
+**Types:**
+- PascalCase (e.g., `ResolvedAgentRoute`, `ChannelPlugin`)
+- Suffixes: `*Adapter` for channel adapters, `*Options` for options objects, `*Result` for return types
+- Generics: Single uppercase letter or descriptive (e.g., `T`, `TConfig`)
+
+**Constants:**
+- SCREAMING_SNAKE_CASE for true constants (e.g., `CHANNEL_IDS`, `DEFAULT_CHAT_CHANNEL`)
+- camelCase for runtime-derived constants (e.g., `defaultRuntime`)
+
+## Where to Add New Code
+
+**New Feature (end-to-end):**
+1. **Config schema:** Add to `src/config/zod-schema.js` + TypeScript type in `src/config/types.ts`
+2. **Primary code:** Create feature directory under `src/<feature>/` or in existing domain
+3. **Commands:** Add handler in `src/commands/<feature>.ts`
+4. **CLI registration:** Register in `src/cli/program/command-registry.ts`
+5. **Tests:** Colocate as `src/<feature>/<module>.test.ts`
+
+**New Channel/Plugin:**
+1. **If built-in:** Create directory under `src/<channel>/` with adapter implementations
+2. **If extension:** Create workspace under `extensions/<channel>/` with own `package.json`
+3. **Plugin entry:** Export `ChannelPlugin` from `extensions/<channel>/index.ts`
+4. **Gateway integration:** Plugin auto-loaded during `src/gateway/boot.ts`
+5. **Docs:** Add to `docs/channels/<channel>.md`
+
+**New Agent Tool:**
+1. **If built-in:** Create in `src/agents/tools/<tool>.ts`
+2. **If skill:** Create workspace under `skills/<tool>/` with own `package.json`
+3. **Tool registration:** Export tool factory from skill entry point
+4. **Tests:** Colocate as `src/agents/tools/<tool>.test.ts`
+
+**Utilities/Helpers:**
+- **Shared helpers:** `src/utils.ts` (if short) or new file in `src/shared/` (e.g., `src/shared/text/`)
+- **Test helpers:** `test/helpers/` (used by multiple test suites)
+- **Infrastructure:** `src/infra/` (cross-cutting concerns)
+
+**New Channel Adapter Method:**
+- Add to `ChannelGatewayAdapter` or other `Channel*Adapter` interface in `src/channels/plugins/types.ts`
+- Implement in each channel's adapter code
+- If optional, include in protocol definition (`src/gateway/protocol/`)
+
+## Special Directories
+
+**`dist/`:**
+- Purpose: Compiled TypeScript output
+- Generated: Yes (by `tsc`)
+- Committed: No (.gitignored)
+- Structure: Mirrors `src/` layout, served as built package
+
+**`node_modules/`:**
+- Purpose: Installed dependencies
+- Generated: Yes (by pnpm)
+- Committed: No (.gitignored)
+- Note: Do not edit; use patches via `pnpm patch` if needed
+
+**`.planning/codebase/`:**
+- Purpose: GSD planning documents (architecture, structure, conventions, testing, concerns)
+- Generated: No (manually maintained)
+- Committed: Yes
+- Note: Used by `/gsd:plan-phase` and `/gsd:execute-phase` to drive decisions
+
+**`vendor/a2ui/`:**
+- Purpose: Vendored A2UI canvas bundle (hash-tracked)
+- Generated: Yes (via `pnpm canvas:a2ui:bundle`)
+- Committed: Yes (with `.bundle.hash` marker)
+- Note: Regenerate only when `src/canvas-host/a2ui/` changes
+
+**`patches/`:**
+- Purpose: pnpm patch files for dependency fixes
+- Generated: By `pnpm patch` command
+- Committed: Yes
+- Pattern: `<package>@<version>.patch` files; applied automatically on install
+
+**`apps/macos/` and `apps/ios/`:**
+- Purpose: Native mobile apps (Swift/Kotlin)
+- Structure: Separate build systems (Xcode, Gradle), not TypeScript
+- Integration: Build output serves web UI and agent control surfaces
+
+**`extensions/` and `skills/`:**
+- Purpose: Monorepo workspaces for plugins
+- Pattern: Each package has own `package.json`, `src/`, `tsconfig.json`
+- Build: Each compiled independently via pnpm workspace
+- Note: Avoid `workspace:*` in production dependencies (use in devDependencies/peerDependencies only)
+
+## Versioning Locations
+
+Update these when releasing:
+- `package.json`: `version` field (format: `YYYY.M.D-N` or semantic)
+- `apps/android/app/build.gradle.kts`: `versionName` and `versionCode`
+- `apps/ios/Sources/Info.plist`: `CFBundleShortVersionString` and `CFBundleVersion`
+- `apps/macos/Sources/Clawdbot/Resources/Info.plist`: Same
+- `docs/install/updating.md`: Pinned npm version
