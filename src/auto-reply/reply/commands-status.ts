@@ -31,6 +31,7 @@ import { normalizeGroupActivation } from "../group-activation.js";
 import { buildStatusMessage } from "../status.js";
 import { getFollowupQueueDepth, resolveQueueSettings } from "./queue.js";
 import { resolveSubagentLabel } from "./subagents-utils.js";
+import { fetchSystemStatus, formatSystemStatus } from "./system-status.js";
 
 function formatApiKeySnippet(apiKey: string): string {
   const compact = apiKey.replace(/\s+/g, "");
@@ -245,5 +246,14 @@ export async function buildStatusReply(params: {
     includeTranscriptUsage: false,
   });
 
-  return { text: statusText };
+  // Add system-wide status information
+  let systemStatusText = "";
+  try {
+    const systemStatus = await fetchSystemStatus();
+    systemStatusText = "\n\n" + formatSystemStatus(systemStatus);
+  } catch (error) {
+    systemStatusText = "\n\n⚠️ System status unavailable";
+  }
+
+  return { text: statusText + systemStatusText };
 }
