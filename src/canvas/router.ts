@@ -18,7 +18,9 @@ export function renderCanvas(channel: ChannelType, canvas: Canvas): unknown {
     case "teams":
     case "zalo":
       return renderTelegramMarkdown(canvas); // Fallback to markdown
-    default:
-      throw new Error(`Unknown channel type: ${channel}`);
+    default: {
+      const _exhaustive: never = channel;
+      return _exhaustive;
+    }
   }
 }
