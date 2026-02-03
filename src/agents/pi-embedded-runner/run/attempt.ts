@@ -88,6 +88,7 @@ import {
 import { splitSdkTools } from "../tool-split.js";
 import { describeUnknownError, mapThinkingLevel } from "../utils.js";
 import { detectAndLoadPromptImages } from "./images.js";
+import { shouldQueryJarvis, extractSearchTopic } from "../jarvis-detector.js";
 
 export function injectHistoryImagesIntoMessages(
   messages: AgentMessage[],
@@ -656,7 +657,33 @@ export async function runEmbeddedAttempt(
 
       const queueHandle: EmbeddedPiQueueHandle = {
         queueMessage: async (text: string) => {
-          await activeSession.steer(text);
+          let context = "";
+
+          // Smart Jarvis detection
+          if (shouldQueryJarvis(text)) {
+            try {
+              const topic = extractSearchTopic(text);
+              // Dynamically import jarvis skill to avoid hard dependency
+              const jarvisSkill = await import("../../../skills/jarvis/src/index.js");
+              const memories = await jarvisSkill.search({ q: topic, limit: 5 });
+
+              if (memories && memories.length > 0) {
+                const memoryTexts = memories
+                  .map((m: Record<string, unknown>) => m.content || m.summary)
+                  .filter(Boolean)
+                  .join(" | ");
+                if (memoryTexts) {
+                  context = `\n\n[Memory Context]: ${memoryTexts}`;
+                }
+              }
+            } catch (err) {
+              // Silently ignore Jarvis errors - don't break the message flow
+              log.debug(`Jarvis context lookup failed: ${err instanceof Error ? err.message : String(err)}`);
+            }
+          }
+
+          // Pass message with optional context to agent
+          await activeSession.steer(text + context);
         },
         isStreaming: () => activeSession.isStreaming,
         isCompacting: () => subscription.isCompacting(),
