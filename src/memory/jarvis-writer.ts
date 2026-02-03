@@ -9,6 +9,7 @@ async function getJarvisSkill() {
 
   try {
     // Try compiled dist version first
+    // @ts-expect-error - Dynamic import from outside rootDir
     cachedJarvis = await import("../../skills/jarvis/dist/index.js");
   } catch {
     // Fallback: dynamic import with type stubs
@@ -24,6 +25,7 @@ async function getJarvisSkill() {
     };
   }
 
+  // @ts-expect-error - Type is narrowed by return type of getJarvisSkill
   return cachedJarvis;
 }
 

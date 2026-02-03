@@ -664,12 +664,15 @@ export async function runEmbeddedAttempt(
             try {
               const topic = extractSearchTopic(text);
               // Dynamically import jarvis skill to avoid hard dependency
+              // @ts-expect-error - Dynamic import from outside rootDir
               const jarvisSkill = await import("../../../skills/jarvis/dist/index.js").catch(
                 async () => {
                   // Fallback to source version if dist not available
+                  // @ts-expect-error - Dynamic import from outside rootDir
                   return import("../../../skills/jarvis/src/index.js");
                 },
               );
+              // @ts-expect-error - Module type is unknown due to external import
               const memories = await jarvisSkill.search({ q: topic, limit: 5 });
 
               if (memories && memories.length > 0) {
