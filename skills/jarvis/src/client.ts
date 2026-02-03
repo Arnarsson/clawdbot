@@ -1,5 +1,5 @@
-const API_BASE = process.env.JARVIS_API_URL || 'https://api.jarvis.eureka-ai.cc/api/v2';
-const API_KEY = process.env.JARVIS_API_KEY;
+const API_BASE = process.env.JARVIS_API_URL || 'http://localhost:8000/api/v2';
+const API_KEY = process.env.JARVIS_API_KEY || 'dev-local-key-eureka-telegram';
 
 interface FetchOptions {
   method?: 'GET' | 'POST' | 'PATCH';
