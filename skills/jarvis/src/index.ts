@@ -1,20 +1,22 @@
 import type { WritePayload, SearchQuery, JarvisMemory } from './types.js';
+import { apiCall, makeRequestId } from './client.js';
 
-const API_BASE = process.env.JARVIS_API_URL || 'https://api.jarvis.eureka-ai.cc/api/v2';
-const API_KEY = process.env.JARVIS_API_KEY;
-
-if (!API_KEY) {
-  throw new Error('JARVIS_API_KEY environment variable required');
-}
-
-// Cache key: "jarvis:search:<query>:<timestamp_bucket>"
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 export { search, writeTask, writeDecision, getContext };
 
 async function search(query: SearchQuery): Promise<JarvisMemory[]> {
-  // TODO: implement
-  return [];
+  const params = new URLSearchParams({
+    q: query.q,
+    limit: String(query.limit || 25),
+    ...(query.days_back && { days_back: String(query.days_back) }),
+  });
+
+  const response = await apiCall<{ results: JarvisMemory[] }>(
+    `/search?${params.toString()}`
+  );
+
+  return response.results || [];
 }
 
 async function writeTask(payload: WritePayload): Promise<{ id: string }> {
