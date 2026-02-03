@@ -1,0 +1,27 @@
+{
+  "id": "jarvis",
+  "name": "Jarvis Memory Bridge",
+  "version": "1.0.0",
+  "description": "Query and update long-term memory in Telegram",
+  "author": "Sven",
+  "private": true,
+  "triggers": [
+    "/jarvis search:",
+    "/jarvis context",
+    "/jarvis task:",
+    "/jarvis decision:",
+    "remember when",
+    "what did we discuss"
+  ],
+  "capabilities": [
+    "read:memory",
+    "read:decisions",
+    "read:open-loops",
+    "write:tasks",
+    "write:decisions"
+  ],
+  "env": {
+    "JARVIS_API_URL": "https://api.jarvis.eureka-ai.cc/api/v2",
+    "JARVIS_API_KEY": "required"
+  }
+}
