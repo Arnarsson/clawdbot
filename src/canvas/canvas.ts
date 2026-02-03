@@ -1,5 +1,5 @@
 // src/canvas/canvas.ts
-import { Canvas, CanvasSection, CanvasAction } from "./types";
+import { Canvas, CanvasSection, CanvasAction } from "./types.js";
 
 export function createCanvas(opts: { title: string; description?: string }): Canvas {
   return {
@@ -17,6 +17,11 @@ export function addSection(canvas: Canvas, section: CanvasSection): Canvas {
 }
 
 export function addAction(canvas: Canvas, sectionIndex: number, action: CanvasAction): Canvas {
+  if (sectionIndex < 0 || sectionIndex >= canvas.sections.length) {
+    throw new Error(
+      `Section index ${sectionIndex} out of bounds (canvas has ${canvas.sections.length} sections)`,
+    );
+  }
   const sections = [...canvas.sections];
   sections[sectionIndex] = {
     ...sections[sectionIndex],
