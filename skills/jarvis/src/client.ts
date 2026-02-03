@@ -10,7 +10,8 @@ interface FetchOptions {
 export async function apiCall<T>(
   path: string,
   options: FetchOptions = {},
-  retries = 3
+  retries = 3,
+  shouldRetry: (err: Error, attempt: number) => boolean = defaultShouldRetry
 ): Promise<T> {
   if (!API_KEY) throw new Error('JARVIS_API_KEY not set');
 
@@ -39,13 +40,25 @@ export async function apiCall<T>(
       return (await response.json()) as T;
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-      if (attempt < retries - 1) {
-        await new Promise(r => setTimeout(r, 1000 * (attempt + 1))); // exponential backoff
+      if (attempt < retries - 1 && shouldRetry(lastError, attempt)) {
+        await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt))); // exponential backoff
       }
     }
   }
 
   throw lastError || new Error('Jarvis API call failed');
+}
+
+function defaultShouldRetry(err: Error, attempt: number): boolean {
+  // Don't retry client errors (4xx) or auth errors (401, 403)
+  const msg = err.message.toLowerCase();
+  if (msg.includes('401') || msg.includes('403') || msg.includes('4')) {
+    return false; // Don't retry client errors
+  }
+  if (msg.includes('503') || msg.includes('timeout')) {
+    return true; // DO retry server errors and timeouts
+  }
+  return attempt < 2; // Default: retry up to 2 times
 }
 
 export function makeRequestId(): string {

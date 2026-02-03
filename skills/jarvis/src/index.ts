@@ -16,7 +16,7 @@ async function search(query: SearchQuery): Promise<JarvisMemory[]> {
     `/search?${params.toString()}`
   );
 
-  return response.results || [];
+  return response?.results ?? [];
 }
 
 async function writeTask(payload: WritePayload): Promise<{ id: string }> {
