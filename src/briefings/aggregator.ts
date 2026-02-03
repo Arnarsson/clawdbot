@@ -1,7 +1,34 @@
 import type { Canvas, CanvasSection } from "../canvas/types.js";
 
+// Lazy-loaded Jarvis skill to avoid rootDir conflicts
+let cachedJarvis: {
+  getContext: () => Promise<{
+    pending_decisions: Array<{ title: string }>;
+    open_loops: Array<{ title: string }>;
+  }>;
+} | null = null;
+
+async function getJarvisSkill() {
+  if (cachedJarvis) return cachedJarvis;
+
+  try {
+    // Try compiled dist version first
+    cachedJarvis = await import("../../skills/jarvis/dist/index.js");
+  } catch {
+    // Fallback: return mock with empty context
+    cachedJarvis = {
+      getContext: async () => ({
+        pending_decisions: [],
+        open_loops: [],
+      }),
+    };
+  }
+
+  return cachedJarvis;
+}
+
 export async function createMorningBriefing(): Promise<Canvas> {
-  const jarvis = await import("../../skills/jarvis/src/index.js");
+  const jarvis = await getJarvisSkill();
   const context = await jarvis.getContext();
 
   const sections: CanvasSection[] = [];
@@ -34,7 +61,7 @@ export async function createMorningBriefing(): Promise<Canvas> {
 }
 
 export async function createPreMeetingBriefing(): Promise<Canvas> {
-  const jarvis = await import("../../skills/jarvis/src/index.js");
+  const jarvis = await getJarvisSkill();
   const context = await jarvis.getContext();
 
   const sections: CanvasSection[] = [];

@@ -88,7 +88,7 @@ import {
 import { splitSdkTools } from "../tool-split.js";
 import { describeUnknownError, mapThinkingLevel } from "../utils.js";
 import { detectAndLoadPromptImages } from "./images.js";
-import { shouldQueryJarvis, extractSearchTopic } from "../jarvis-detector.js";
+import { shouldQueryJarvis, extractSearchTopic } from "../../jarvis-detector.js";
 
 export function injectHistoryImagesIntoMessages(
   messages: AgentMessage[],
@@ -664,7 +664,12 @@ export async function runEmbeddedAttempt(
             try {
               const topic = extractSearchTopic(text);
               // Dynamically import jarvis skill to avoid hard dependency
-              const jarvisSkill = await import("../../../skills/jarvis/src/index.js");
+              const jarvisSkill = await import("../../../skills/jarvis/dist/index.js").catch(
+                async () => {
+                  // Fallback to source version if dist not available
+                  return import("../../../skills/jarvis/src/index.js");
+                },
+              );
               const memories = await jarvisSkill.search({ q: topic, limit: 5 });
 
               if (memories && memories.length > 0) {
@@ -678,7 +683,9 @@ export async function runEmbeddedAttempt(
               }
             } catch (err) {
               // Silently ignore Jarvis errors - don't break the message flow
-              log.debug(`Jarvis context lookup failed: ${err instanceof Error ? err.message : String(err)}`);
+              log.debug(
+                `Jarvis context lookup failed: ${err instanceof Error ? err.message : String(err)}`,
+              );
             }
           }
 
