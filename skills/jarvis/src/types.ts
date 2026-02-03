@@ -36,3 +36,9 @@ export interface WritePayload {
   priority?: 'low' | 'medium' | 'high';
   due_date?: string;
 }
+
+export interface JarvisContext {
+  pending_decisions: JarvisDecision[];
+  open_loops: JarvisOpenLoop[];
+  recent_memory_count: number;
+}
