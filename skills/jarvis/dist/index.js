@@ -7,7 +7,7 @@ async function search(query) {
         limit: String(query.limit || 25),
         ...(query.days_back && { days_back: String(query.days_back) }),
     });
-    const response = await apiCall(`/search?${params.toString()}`);
+    const response = await apiCall(`/bridge/search?${params.toString()}`);
     return response?.results ?? [];
 }
 async function writeTask(payload) {
@@ -22,7 +22,7 @@ async function writeTask(payload) {
         request_id: requestId,
         tags: ['eureka-auto'],
     };
-    const response = await apiCall('/tasks', { method: 'POST', body });
+    const response = await apiCall('/actions/create-linear-task', { method: 'POST', body });
     console.log(`[Jarvis] Task created: ${response.id} (req: ${requestId})`);
     return { id: response.id };
 }
@@ -37,13 +37,13 @@ async function writeDecision(payload) {
         created_by: 'Eureka',
         request_id: requestId,
     };
-    const response = await apiCall('/decisions', { method: 'POST', body });
+    const response = await apiCall('/bridge/decisions', { method: 'POST', body });
     console.log(`[Jarvis] Decision logged: ${response.id} (req: ${requestId})`);
     return { id: response.id };
 }
 async function getContext() {
     const [decisions, loops] = await Promise.all([
-        apiCall('/decisions?status=pending&limit=10'),
+        apiCall('/bridge/decisions?status=pending&limit=10'),
         apiCall('/open-loops?status=open&limit=10'),
     ]);
     return {

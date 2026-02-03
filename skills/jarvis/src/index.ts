@@ -13,7 +13,7 @@ async function search(query: SearchQuery): Promise<JarvisMemory[]> {
   });
 
   const response = await apiCall<{ results: JarvisMemory[] }>(
-    `/search?${params.toString()}`
+    `/bridge/search?${params.toString()}`
   );
 
   return response?.results ?? [];
@@ -34,7 +34,7 @@ async function writeTask(payload: WritePayload): Promise<{ id: string }> {
   };
 
   const response = await apiCall<{ id: string; created_at: string }>(
-    '/tasks',
+    '/actions/create-linear-task',
     { method: 'POST', body }
   );
 
@@ -56,7 +56,7 @@ async function writeDecision(payload: WritePayload): Promise<{ id: string }> {
   };
 
   const response = await apiCall<{ id: string; created_at: string }>(
-    '/decisions',
+    '/bridge/decisions',
     { method: 'POST', body }
   );
 
@@ -66,7 +66,7 @@ async function writeDecision(payload: WritePayload): Promise<{ id: string }> {
 
 async function getContext(): Promise<JarvisContext> {
   const [decisions, loops] = await Promise.all([
-    apiCall<{ decisions: JarvisDecision[] }>('/decisions?status=pending&limit=10'),
+    apiCall<{ decisions: JarvisDecision[] }>('/bridge/decisions?status=pending&limit=10'),
     apiCall<{ open_loops: JarvisOpenLoop[] }>('/open-loops?status=open&limit=10'),
   ]);
 
