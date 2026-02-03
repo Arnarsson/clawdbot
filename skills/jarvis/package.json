@@ -1,0 +1,21 @@
+{
+  "name": "@clawdbot/skill-jarvis",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "Private Jarvis memory bridge for Eureka",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "clawdbot": "workspace:*"
+  },
+  "peerDependencies": {
+    "clawdbot": "*"
+  }
+}
