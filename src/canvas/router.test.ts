@@ -29,4 +29,18 @@ describe("Canvas Router", () => {
     const result = renderCanvas("telegram", canvas);
     expect(typeof result).toBe("string");
   });
+
+  it("should route Teams canvas rendering", () => {
+    const canvas: Canvas = { title: "Test", sections: [] };
+    const result = renderCanvas("teams", canvas);
+    expect(result).toBeDefined();
+    expect(result).toHaveProperty("body");
+  });
+
+  it("should route Zalo canvas rendering", () => {
+    const canvas: Canvas = { title: "Test", sections: [] };
+    const result = renderCanvas("zalo", canvas);
+    expect(result).toBeDefined();
+    expect(result).toHaveProperty("text");
+  });
 });
