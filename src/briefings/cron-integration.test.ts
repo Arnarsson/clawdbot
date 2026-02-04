@@ -23,8 +23,8 @@ describe("Briefing Cron Integration", () => {
 
     expect(mockCronService.add).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: "Briefing: Morning",
-        schedule: "0 8 * * *", // 08:00 every day
+        name: "Briefing: Morning",
+        schedule: { kind: "cron", expr: "0 8 * * *" }, // 08:00 every day
       }),
     );
   });
@@ -40,17 +40,17 @@ describe("Briefing Cron Integration", () => {
 
     expect(mockCronService.add).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: "Briefing: Weekly",
-        schedule: "0 9 * * 1", // 09:00 every Monday (day 1)
+        name: "Briefing: Weekly",
+        schedule: { kind: "cron", expr: "0 9 * * 1" }, // 09:00 every Monday (day 1)
       }),
     );
   });
 
-  it("should unregister all briefing jobs by title prefix", async () => {
+  it("should unregister all briefing jobs by name prefix", async () => {
     mockCronService.list = vi.fn().mockResolvedValue([
-      { id: "br-morning", title: "Briefing: Morning" },
-      { id: "br-weekly", title: "Briefing: Weekly" },
-      { id: "other", title: "Other Job" },
+      { id: "br-morning", name: "Briefing: Morning" },
+      { id: "br-weekly", name: "Briefing: Weekly" },
+      { id: "other", name: "Other Job" },
     ]);
 
     await unregisterBriefingJobs(mockCronService);

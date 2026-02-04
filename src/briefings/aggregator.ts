@@ -13,8 +13,8 @@ async function getJarvisSkill() {
 
   try {
     // Try compiled dist version first
-    // @ts-expect-error - Dynamic import from outside rootDir
-    cachedJarvis = await import("../../skills/jarvis/dist/index.js");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    cachedJarvis = (await import("../../skills/jarvis/dist/index.js")) as any;
   } catch {
     // Fallback: return mock with empty context
     cachedJarvis = {
@@ -25,8 +25,7 @@ async function getJarvisSkill() {
     };
   }
 
-  // @ts-expect-error - Type is narrowed by return type of getJarvisSkill
-  return cachedJarvis;
+  return cachedJarvis!;
 }
 
 export async function createMorningBriefing(): Promise<Canvas> {

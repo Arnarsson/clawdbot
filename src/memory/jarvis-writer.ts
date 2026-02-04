@@ -9,24 +9,23 @@ async function getJarvisSkill() {
 
   try {
     // Try compiled dist version first
-    // @ts-expect-error - Dynamic import from outside rootDir
-    cachedJarvis = await import("../../skills/jarvis/dist/index.js");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    cachedJarvis = (await import("../../skills/jarvis/dist/index.js")) as any;
   } catch {
     // Fallback: dynamic import with type stubs
     cachedJarvis = {
-      writeDecision: async (payload: unknown) => {
+      writeDecision: async (_payload: unknown) => {
         console.warn("[Jarvis] Not initialized, using mock decision write");
         return { id: `mock-decision-${Date.now()}` };
       },
-      writeTask: async (payload: unknown) => {
+      writeTask: async (_payload: unknown) => {
         console.warn("[Jarvis] Not initialized, using mock task write");
         return { id: `mock-task-${Date.now()}` };
       },
     };
   }
 
-  // @ts-expect-error - Type is narrowed by return type of getJarvisSkill
-  return cachedJarvis;
+  return cachedJarvis!;
 }
 
 export async function writeDecisionToJarvis(

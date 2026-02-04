@@ -1,4 +1,5 @@
 import type { CronService } from "../cron/service.js";
+import type { CronJobCreate, CronSchedule } from "../cron/types.js";
 
 export interface BriefingScheduleConfig {
   morningEnabled: boolean;
@@ -21,15 +22,15 @@ const DAY_TO_CRON: Record<string, number> = {
   saturday: 6,
 };
 
-function timeToCronExpression(time: string): string {
+function timeToCronSchedule(time: string): CronSchedule {
   const [hours, minutes] = time.split(":").map(Number);
-  return `${minutes} ${hours} * * *`;
+  return { kind: "cron", expr: `${minutes} ${hours} * * *` };
 }
 
-function timeToDayOfWeekCron(time: string, day: string): string {
+function timeToDayOfWeekCronSchedule(time: string, day: string): CronSchedule {
   const [hours, minutes] = time.split(":").map(Number);
   const dayNum = DAY_TO_CRON[day.toLowerCase()] ?? 1;
-  return `${minutes} ${hours} * * ${dayNum}`;
+  return { kind: "cron", expr: `${minutes} ${hours} * * ${dayNum}` };
 }
 
 export async function registerBriefingJobs(
@@ -41,22 +42,28 @@ export async function registerBriefingJobs(
 
   // Morning briefing
   if (config.morningEnabled && config.morningTime) {
-    await cronService.add({
-      title: "Briefing: Morning",
-      schedule: timeToCronExpression(config.morningTime),
+    const job: CronJobCreate = {
+      name: "Briefing: Morning",
+      schedule: timeToCronSchedule(config.morningTime),
       enabled: true,
-      text: "dispatch-briefing:morning",
-    });
+      sessionTarget: "main",
+      wakeMode: "now",
+      payload: { kind: "systemEvent", text: "dispatch-briefing:morning" },
+    };
+    await cronService.add(job);
   }
 
   // Weekly briefing
   if (config.weeklyEnabled && config.weeklyDay && config.weeklyTime) {
-    await cronService.add({
-      title: "Briefing: Weekly",
-      schedule: timeToDayOfWeekCron(config.weeklyTime, config.weeklyDay),
+    const job: CronJobCreate = {
+      name: "Briefing: Weekly",
+      schedule: timeToDayOfWeekCronSchedule(config.weeklyTime, config.weeklyDay),
       enabled: true,
-      text: "dispatch-briefing:weekly",
-    });
+      sessionTarget: "main",
+      wakeMode: "now",
+      payload: { kind: "systemEvent", text: "dispatch-briefing:weekly" },
+    };
+    await cronService.add(job);
   }
 
   // Pre-meeting briefing (trigger on meeting detection, not cron time)
@@ -69,7 +76,7 @@ export async function registerBriefingJobs(
 export async function unregisterBriefingJobs(cronService: CronService): Promise<void> {
   const jobs = await cronService.list({ includeDisabled: true });
   for (const job of jobs) {
-    if (job.title?.startsWith("Briefing:")) {
+    if (job.name?.startsWith("Briefing:")) {
       await cronService.remove(job.id);
     }
   }
