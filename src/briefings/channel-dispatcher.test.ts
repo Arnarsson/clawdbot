@@ -132,6 +132,32 @@ describe("Briefing Channel Dispatcher", () => {
       expect(mockLogger.info).toHaveBeenCalledWith("[Briefing] Morning briefing sent to discord");
       expect(mockLogger.info).toHaveBeenCalledWith("[Briefing] Morning briefing sent to slack");
     });
+
+    it("should dispatch to Teams channel", async () => {
+      const senders = {
+        teams: { send: vi.fn().mockResolvedValue(undefined) },
+      } as unknown as Record<ChannelType, ChannelSender>;
+
+      const opts: BriefingDispatcherOptions = {
+        enabledChannels: ["teams"],
+      };
+
+      await dispatchMorningBriefing(senders, opts);
+      expect(senders.teams.send).toHaveBeenCalled();
+    });
+
+    it("should dispatch to Zalo channel", async () => {
+      const senders = {
+        zalo: { send: vi.fn().mockResolvedValue(undefined) },
+      } as unknown as Record<ChannelType, ChannelSender>;
+
+      const opts: BriefingDispatcherOptions = {
+        enabledChannels: ["zalo"],
+      };
+
+      await dispatchMorningBriefing(senders, opts);
+      expect(senders.zalo.send).toHaveBeenCalled();
+    });
   });
 
   describe("dispatchPreMeetingBriefing", () => {
