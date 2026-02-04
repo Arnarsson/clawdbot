@@ -1,24 +1,30 @@
+import type { CronService } from "../cron/service.js";
+import { registerBriefingJobs, unregisterBriefingJobs } from "./cron-integration.js";
+import type { BriefingConfig } from "../config/phase2-4-config.js";
+
 export interface BriefingScheduler {
-  tasks: string[];
+  start(cronService: CronService, config: BriefingConfig): Promise<void>;
+  stop(cronService: CronService): Promise<void>;
 }
 
-export function startBriefingScheduler(): BriefingScheduler {
-  const tasks: string[] = [];
+export function createBriefingScheduler(): BriefingScheduler {
+  return {
+    async start(cronService: CronService, config: BriefingConfig): Promise<void> {
+      await registerBriefingJobs(cronService, {
+        morningEnabled: config.morningBriefingEnabled,
+        morningTime: config.morningTime,
+        preEnabled: config.preMeetingBriefingEnabled,
+        preMinutesAhead: config.preMeetingMinutesAhead,
+        weeklyEnabled: config.weeklyBriefingEnabled,
+        weeklyDay: config.weeklyDay,
+        weeklyTime: config.weeklyTime,
+      });
+      console.log("[Briefing Scheduler] Started with config", config);
+    },
 
-  // Morning briefing at 8 AM
-  tasks.push("morning-briefing-08:00");
-
-  // Pre-meeting briefing at 1 hour before meetings (simulated)
-  tasks.push("pre-meeting-briefing");
-
-  // Weekly briefing on Monday at 9 AM
-  tasks.push("weekly-briefing-monday-09:00");
-
-  console.log("[Briefing Scheduler] Started with tasks:", tasks);
-
-  return { tasks };
-}
-
-export function stopBriefingScheduler(scheduler: BriefingScheduler): void {
-  console.log("[Briefing Scheduler] Stopped");
+    async stop(cronService: CronService): Promise<void> {
+      await unregisterBriefingJobs(cronService);
+      console.log("[Briefing Scheduler] Stopped");
+    },
+  };
 }
