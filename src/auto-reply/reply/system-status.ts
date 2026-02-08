@@ -83,8 +83,7 @@ async function fetchLinearTasks(): Promise<LinearTaskCounts> {
 
     // Extract task identifiers from in-progress items
     const inProgressTasks =
-      inProgressResult?.data?.issues?.nodes?.map((n: { identifier: string }) => n.identifier) ||
-      [];
+      inProgressResult?.data?.issues?.nodes?.map((n: { identifier: string }) => n.identifier) || [];
 
     return {
       todo: todoResult?.data?.issues?.nodes?.length || 0,
@@ -109,12 +108,8 @@ function getAgentStatus(): AgentStatus {
   const allRuns = listSubagentRunsForRequester("");
 
   // Find Mason and Eureka runs
-  const masonRun = allRuns.find(
-    (r) => !r.endedAt && r.agentId === "mason" && r.sessionKey.includes("mason"),
-  );
-  const eurekaRun = allRuns.find(
-    (r) => !r.endedAt && r.agentId === "eureka" && r.sessionKey.includes("eureka"),
-  );
+  const masonRun = allRuns.find((r) => !r.endedAt && r.childSessionKey.includes("mason"));
+  const eurekaRun = allRuns.find((r) => !r.endedAt && r.childSessionKey.includes("eureka"));
 
   const activeSubagents = allRuns.filter((r) => !r.endedAt).length;
 
@@ -175,10 +170,7 @@ function getBlockers(): string[] {
  * Fetch complete system status
  */
 export async function fetchSystemStatus(): Promise<SystemStatusData> {
-  const [linear, recentDeploys] = await Promise.all([
-    fetchLinearTasks(),
-    getRecentDeploys(),
-  ]);
+  const [linear, recentDeploys] = await Promise.all([fetchLinearTasks(), getRecentDeploys()]);
 
   const agents = getAgentStatus();
   const blockers = getBlockers();

@@ -114,7 +114,7 @@ export async function notifyTaskStateChange(params: {
   fromState: string;
   toState: string;
 }): Promise<void> {
-  const emoji = toState === "Done" ? "✅" : toState === "In Progress" ? "🔄" : "📋";
+  const emoji = params.toState === "Done" ? "✅" : params.toState === "In Progress" ? "🔄" : "📋";
   const text = `${params.taskId}: ${params.fromState} → ${params.toState}`;
 
   await sendNotification({

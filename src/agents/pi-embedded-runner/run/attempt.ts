@@ -672,7 +672,6 @@ export async function runEmbeddedAttempt(
                   return import("../../../skills/jarvis/src/index.js");
                 },
               );
-              // @ts-expect-error - Module type is unknown due to external import
               const memories = await jarvisSkill.search({ q: topic, limit: 5 });
 
               if (memories && memories.length > 0) {
