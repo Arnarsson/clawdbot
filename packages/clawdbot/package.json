@@ -1,16 +1,18 @@
 {
   "name": "clawdbot",
-  "version": "2026.1.27-beta.1",
-  "description": "Compatibility shim that forwards to openclaw",
+  "version": "2026.1.26",
+  "type": "module",
+  "description": "Compatibility shim that forwards to moltbot",
+  "exports": {
+    ".": "./index.js",
+    "./plugin-sdk": "./plugin-sdk/index.js"
+  },
   "bin": {
     "clawdbot": "./bin/clawdbot.js"
   },
-  "type": "module",
-  "exports": {
-    ".": "./index.js",
-    "./cli-entry": "./bin/clawdbot.js"
-  },
   "dependencies": {
-    "openclaw": "workspace:*"
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
+    "moltbot": "workspace:*"
   }
 }

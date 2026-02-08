@@ -41,10 +41,10 @@ function pickPrimaryWindow(windows: UsageWindow[]): UsageWindow | undefined {
 }
 
 function formatWindowShort(window: UsageWindow, now?: number): string {
-  const remaining = clampPercent(100 - window.usedPercent);
+  const used = clampPercent(window.usedPercent);
   const reset = formatResetRemaining(window.resetAt, now);
   const resetSuffix = reset ? ` ⏱${reset}` : "";
-  return `${remaining.toFixed(0)}% left (${window.label}${resetSuffix})`;
+  return `${used.toFixed(0)}% used (${window.label}${resetSuffix})`;
 }
 
 export function formatUsageWindowSummary(
@@ -65,10 +65,10 @@ export function formatUsageWindowSummary(
   const includeResets = opts?.includeResets ?? false;
   const windows = snapshot.windows.slice(0, maxWindows);
   const parts = windows.map((window) => {
-    const remaining = clampPercent(100 - window.usedPercent);
+    const used = clampPercent(window.usedPercent);
     const reset = includeResets ? formatResetRemaining(window.resetAt, now) : null;
     const resetSuffix = reset ? ` ⏱${reset}` : "";
-    return `${window.label} ${remaining.toFixed(0)}% left${resetSuffix}`;
+    return `${window.label} ${used.toFixed(0)}% used${resetSuffix}`;
   });
   return parts.join(" · ");
 }
@@ -118,10 +118,10 @@ export function formatUsageReportLines(summary: UsageSummary, opts?: { now?: num
     }
     lines.push(`  ${entry.displayName}${planSuffix}`);
     for (const window of entry.windows) {
-      const remaining = clampPercent(100 - window.usedPercent);
+      const used = clampPercent(window.usedPercent);
       const reset = formatResetRemaining(window.resetAt, opts?.now);
       const resetSuffix = reset ? ` · resets ${reset}` : "";
-      lines.push(`    ${window.label}: ${remaining.toFixed(0)}% left${resetSuffix}`);
+      lines.push(`    ${window.label}: ${used.toFixed(0)}% used${resetSuffix}`);
     }
   }
   return lines;
