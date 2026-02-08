@@ -251,7 +251,7 @@ export async function buildStatusReply(params: {
   try {
     const systemStatus = await fetchSystemStatus();
     systemStatusText = "\n\n" + formatSystemStatus(systemStatus);
-  } catch (error) {
+  } catch {
     systemStatusText = "\n\n⚠️ System status unavailable";
   }
 
